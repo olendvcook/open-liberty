@@ -12,7 +12,7 @@ package com.ibm.ws.ejbcontainer.async.fat.tests;
 
 import static junit.framework.Assert.assertNotNull;
 
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.logging.Logger;
 
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -40,6 +40,7 @@ import componenttest.topology.impl.LibertyServer;
 public class AsyncConfigTests extends AbstractTest {
     private final static Logger logger = Logger.getLogger(AsyncConfigTests.class.getName());
     private static final String SERVLET = "AsyncConfigTestWeb/AsyncConfigServlet";
+    private static HashSet<String> apps = new HashSet<String>();
 
     @Server("com.ibm.ws.ejbcontainer.async.fat.AsyncConfigServer")
     public static LibertyServer server;
@@ -80,6 +81,9 @@ public class AsyncConfigTests extends AbstractTest {
         // verify the appSecurity-2.0 feature is ready
         assertNotNull("Security service did not report it was ready", server.waitForStringInLogUsingMark("CWWKS0008I"));
         assertNotNull("LTPA configuration did not report it was ready", server.waitForStringInLogUsingMark("CWWKS4105I"));
+
+        apps.add("AsyncConfigTestApp");
+        apps.add("InitTxRecoveryLogApp");
     }
 
     @AfterClass
@@ -170,6 +174,6 @@ public class AsyncConfigTests extends AbstractTest {
 
         server.setMarkToEndOfLog();
         server.updateServerConfiguration(config);
-        server.waitForConfigUpdateInLogUsingMark(Collections.singleton("AsyncConfigTestApp"));
+        server.waitForConfigUpdateInLogUsingMark(apps);
     }
 }
