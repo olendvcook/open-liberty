@@ -14,4 +14,6 @@ public interface JavaColonLookupLocalEJB extends javax.ejb.EJBLocalObject {
 
     public void lookupJavaNamespaces(boolean bindToJavaGlobal);
 
+    public void lookupJavaRemote(boolean remoteEnabled);
+
 }

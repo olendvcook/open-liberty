@@ -22,40 +22,10 @@ public class JavaColonLookupBean {
     private InitialContext ctx = null;
 
     public void lookupJavaNamespaces(boolean bindToJavaGlobal) throws Exception {
+
+        lookupJavaRemote(bindToJavaGlobal);
+
         ctx = new InitialContext();
-
-        // remote java:global
-        ConfigTestsRemoteEJB rbean = lookupRemoteJavaNamespace(bindToJavaGlobal,
-                                                               "java:global/ConfigTestsTestApp/ConfigTestsEJB/ConfigTestsTestBean!com.ibm.ws.ejbcontainer.bindings.configtests.ejb.ConfigTestsRemoteHome");
-        if (bindToJavaGlobal) {
-            assertNotNull("9 ---> ConfigTestsRemoteEJB java:global lookup did not succeed.", rbean);
-            String rstr = rbean.getString();
-            assertEquals("10 ---> getString() returned unexpected value", "Success", rstr);
-        } else {
-            assertNull("11 --> ConfigTestsRemoteEJB java:global lookup should have failed.", rbean);
-        }
-
-        // remote java:app
-        ConfigTestsRemoteEJB rbean2 = lookupRemoteJavaNamespace(bindToJavaGlobal,
-                                                                "java:app/ConfigTestsEJB/ConfigTestsTestBean!com.ibm.ws.ejbcontainer.bindings.configtests.ejb.ConfigTestsRemoteHome");
-        if (bindToJavaGlobal) {
-            assertNotNull("12 ---> ConfigTestsRemoteEJB java:app lookup did not succeed.", rbean);
-            String rstr = rbean2.getString();
-            assertEquals("13 ---> getString() returned unexpected value", "Success", rstr);
-        } else {
-            assertNull("14 --> ConfigTestsRemoteEJB java:app lookup should have failed.", rbean);
-        }
-
-        // remote java:module
-        ConfigTestsRemoteEJB rbean3 = lookupRemoteJavaNamespace(bindToJavaGlobal,
-                                                                "java:module/ConfigTestsTestBean!com.ibm.ws.ejbcontainer.bindings.configtests.ejb.ConfigTestsRemoteHome");
-        if (bindToJavaGlobal) {
-            assertNotNull("15 ---> ConfigTestsRemoteEJB java:module lookup did not succeed.", rbean);
-            String rstr = rbean3.getString();
-            assertEquals("16 ---> getString() returned unexpected value", "Success", rstr);
-        } else {
-            assertNull("17 --> ConfigTestsRemoteEJB java:module lookup should have failed.", rbean);
-        }
 
         // local java:global
         ConfigTestsLocalEJB bean = lookupLocalJavaNamespace(bindToJavaGlobal,
@@ -88,6 +58,43 @@ public class JavaColonLookupBean {
             assertEquals("25 ---> getString() returned unexpected value", "Success", str);
         } else {
             assertNull("26 --> ConfigTestsLocalEJB lookup should have failed.", bean);
+        }
+    }
+
+    public void lookupJavaRemote(boolean remoteEnabled) throws Exception {
+        ctx = new InitialContext();
+
+        // remote java:global
+        ConfigTestsRemoteEJB rbean = lookupRemoteJavaNamespace(remoteEnabled,
+                                                               "java:global/ConfigTestsTestApp/ConfigTestsEJB/ConfigTestsTestBean!com.ibm.ws.ejbcontainer.bindings.configtests.ejb.ConfigTestsRemoteHome");
+        if (remoteEnabled) {
+            assertNotNull("9 ---> ConfigTestsRemoteEJB java:global lookup did not succeed.", rbean);
+            String rstr = rbean.getString();
+            assertEquals("10 ---> getString() returned unexpected value", "Success", rstr);
+        } else {
+            assertNull("11 --> ConfigTestsRemoteEJB java:global lookup should have failed.", rbean);
+        }
+
+        // remote java:app
+        ConfigTestsRemoteEJB rbean2 = lookupRemoteJavaNamespace(remoteEnabled,
+                                                                "java:app/ConfigTestsEJB/ConfigTestsTestBean!com.ibm.ws.ejbcontainer.bindings.configtests.ejb.ConfigTestsRemoteHome");
+        if (remoteEnabled) {
+            assertNotNull("12 ---> ConfigTestsRemoteEJB java:app lookup did not succeed.", rbean);
+            String rstr = rbean2.getString();
+            assertEquals("13 ---> getString() returned unexpected value", "Success", rstr);
+        } else {
+            assertNull("14 --> ConfigTestsRemoteEJB java:app lookup should have failed.", rbean);
+        }
+
+        // remote java:module
+        ConfigTestsRemoteEJB rbean3 = lookupRemoteJavaNamespace(remoteEnabled,
+                                                                "java:module/ConfigTestsTestBean!com.ibm.ws.ejbcontainer.bindings.configtests.ejb.ConfigTestsRemoteHome");
+        if (remoteEnabled) {
+            assertNotNull("15 ---> ConfigTestsRemoteEJB java:module lookup did not succeed.", rbean);
+            String rstr = rbean3.getString();
+            assertEquals("16 ---> getString() returned unexpected value", "Success", rstr);
+        } else {
+            assertNull("17 --> ConfigTestsRemoteEJB java:module lookup should have failed.", rbean);
         }
     }
 

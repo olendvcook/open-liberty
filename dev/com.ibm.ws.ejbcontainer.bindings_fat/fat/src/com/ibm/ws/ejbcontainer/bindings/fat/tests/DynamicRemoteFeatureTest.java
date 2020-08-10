@@ -10,7 +10,9 @@
  *******************************************************************************/
 package com.ibm.ws.ejbcontainer.bindings.fat.tests;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
@@ -26,10 +28,9 @@ import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 
 import com.ibm.websphere.simplicity.ShrinkHelper;
-import com.ibm.websphere.simplicity.config.EJBContainerElement;
 import com.ibm.websphere.simplicity.config.ServerConfiguration;
 import com.ibm.websphere.simplicity.log.Log;
-import com.ibm.ws.ejbcontainer.bindings.configtests.web.BindToServerRootServlet;
+import com.ibm.ws.ejbcontainer.bindings.configtests.web.DynamicRemoteFeatureServlet;
 
 import componenttest.annotation.Server;
 import componenttest.annotation.TestServlet;
@@ -43,7 +44,7 @@ import componenttest.topology.utils.FATServletClient;
  *
  */
 @RunWith(FATRunner.class)
-public class BindToServerRootTest extends FATServletClient {
+public class DynamicRemoteFeatureTest extends FATServletClient {
     @Rule
     public TestWatcher watchman = new TestWatcher() {
         @Override
@@ -57,16 +58,18 @@ public class BindToServerRootTest extends FATServletClient {
         }
     };
 
-    private static final Class<?> c = BindToServerRootTest.class;
+    private static final Class<?> c = DynamicRemoteFeatureTest.class;
     private static HashSet<String> apps = new HashSet<String>();
-    private static String servlet = "ConfigTestsWeb/BindToServerRootServlet";
+    private static String servlet = "ConfigTestsWeb/DynamicRemoteFeatureServlet";
 
     @Server("com.ibm.ws.ejbcontainer.bindings.fat.server")
-    @TestServlet(servlet = BindToServerRootServlet.class, contextRoot = "ConfigTestsWeb")
+    @TestServlet(servlet = DynamicRemoteFeatureServlet.class, contextRoot = "ConfigTestsWeb")
     public static LibertyServer server;
 
     @ClassRule
     public static RepeatTests r = RepeatTests.with(FeatureReplacementAction.EE7_FEATURES().fullFATOnly().forServers("com.ibm.ws.ejbcontainer.bindings.fat.server")).andWith(FeatureReplacementAction.EE8_FEATURES().forServers("com.ibm.ws.ejbcontainer.bindings.fat.server"));
+
+    private static String ejbRemoteFeature = null;
 
     @BeforeClass
     public static void setUp() throws Exception {
@@ -86,6 +89,17 @@ public class BindToServerRootTest extends FATServletClient {
         ShrinkHelper.exportDropinAppToServer(server, ConfigTestsTestApp);
 
         server.startServer();
+
+        // Store what feature level we are using because of RepeatTest
+        ServerConfiguration config = server.getServerConfiguration();
+        Set<String> features = config.getFeatureManager().getFeatures();
+        features.forEach((String feature) -> {
+            if (feature.toLowerCase().startsWith("ejbremote-")) {
+                ejbRemoteFeature = feature;
+            }
+        });
+
+        Log.info(c, "setUp", "EJB Remote Feature is " + ejbRemoteFeature);
     }
 
     @AfterClass
@@ -95,44 +109,59 @@ public class BindToServerRootTest extends FATServletClient {
         }
     }
 
-    private void updateConfigElement(Boolean bindToServerRoot) throws Exception {
-        String m = "updateConfigElement";
+    private void disableEJBRemoteFeature() throws Exception {
+        String m = "disableEJBRemoteFeature";
 
         ServerConfiguration config = server.getServerConfiguration();
-        EJBContainerElement ejbElement = config.getEJBContainer();
-        if (ejbElement.getBindToServerRoot() != bindToServerRoot) {
-            Log.info(c, m, "adding bindToServerRoot =" + bindToServerRoot + " to server config");
-
-            ejbElement.setBindToServerRoot(bindToServerRoot);
+        Set<String> features = config.getFeatureManager().getFeatures();
+        boolean remoteEnabled = features.removeIf(feature -> feature.toLowerCase().startsWith("ejbremote-"));
+        if (remoteEnabled) {
+            Log.info(c, m, "Remote Enabled, disabling");
             server.setMarkToEndOfLog();
-            server.updateServerConfiguration(config);
+            server.changeFeatures(new ArrayList<String>(features));
             server.waitForConfigUpdateInLogUsingMark(apps);
-            for (String app : apps) {
-                server.restartDropinsApplication(app + ".ear");
-            }
         } else {
-            Log.info(c, m, "config element already set to desired value");
+            Log.info(c, m, "Did not find remote feature enabled, doing nothing.");
+        }
+    }
+
+    private void enableEJBRemoteFeature() throws Exception {
+        String m = "enableEJBRemoteFeature";
+
+        ServerConfiguration config = server.getServerConfiguration();
+        Set<String> features = config.getFeatureManager().getFeatures();
+        boolean remoteEnabled = features.removeIf(feature -> feature.toLowerCase().startsWith("ejbremote-"));
+        if (remoteEnabled) {
+            Log.info(c, m, "Found remote feature enabled already, doing nothing.");
+        } else {
+            Log.info(c, m, "Remote disabled, enabling");
+            server.setMarkToEndOfLog();
+            //features.add(ejbRemoteFeature);
+            features.add("ejbRemote-3.2");
+            server.changeFeatures(new ArrayList<String>(features));
+            server.waitForConfigUpdateInLogUsingMark(apps);
         }
     }
 
     @Test
-    public void testNoBindToServerRootElement() throws Exception {
-        updateConfigElement(null);
+    public void testDynamicRemote() throws Exception {
+        enableEJBRemoteFeature();
 
-        FATServletClient.runTest(server, servlet, "testNoBindToServerRootElement");
+        FATServletClient.runTest(server, servlet, "testRemoteEnabled");
+
+        disableEJBRemoteFeature();
+
+        FATServletClient.runTest(server, servlet, "testRemoteDisabled");
+
+        enableEJBRemoteFeature();
+
+        FATServletClient.runTest(server, servlet, "testRemoteEnabled");
     }
 
-    @Test
-    public void testFalseBindToServerRootElement() throws Exception {
-        updateConfigElement(false);
+    //@Test
+    public void testDisabledEnabled() throws Exception {
+        enableEJBRemoteFeature();
 
-        FATServletClient.runTest(server, servlet, "testFalseBindToServerRootElement");
-    }
-
-    @Test
-    public void testTrueBindToServerRootElement() throws Exception {
-        updateConfigElement(true);
-
-        FATServletClient.runTest(server, servlet, "testTrueBindToServerRootElement");
+        FATServletClient.runTest(server, servlet, "testRemoteEnabled");
     }
 }

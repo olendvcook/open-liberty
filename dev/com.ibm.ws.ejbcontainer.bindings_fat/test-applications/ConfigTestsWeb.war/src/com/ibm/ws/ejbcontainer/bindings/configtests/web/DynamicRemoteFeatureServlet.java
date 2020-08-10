@@ -35,8 +35,8 @@ import componenttest.app.FATServlet;
  *
  */
 @SuppressWarnings("serial")
-@WebServlet("/BindToServerRootServlet")
-public class BindToServerRootServlet extends FATServlet {
+@WebServlet("/DynamicRemoteFeatureServlet")
+public class DynamicRemoteFeatureServlet extends FATServlet {
 
     private InitialContext ctx = null;
 
@@ -49,41 +49,32 @@ public class BindToServerRootServlet extends FATServlet {
         }
     }
 
-    // bindToServerRoot not set (default will be true after beta)
-    public void testNoBindToServerRootElement() throws Exception {
-        // TODO: This should switch to true when the element is switched to default true from beta
-        // TODO: #13338
-        testHelper(false);
-    }
-
-    // bindToJavaGlobal false
-    public void testFalseBindToServerRootElement() throws Exception {
-        testHelper(false);
-    }
-
-    // bindToJavaGlobal explicitly set true
-    public void testTrueBindToServerRootElement() throws Exception {
+    public void testRemoteEnabled() throws Exception {
         testHelper(true);
     }
 
-    private void testHelper(boolean bindToServerRoot) throws Exception {
-        lookupShort(bindToServerRoot);
-        lookupRemoteShort(bindToServerRoot);
-        lookupLong(bindToServerRoot);
-        lookupRemoteLong(bindToServerRoot);
+    public void testRemoteDisabled() throws Exception {
+        testHelper(false);
+    }
+
+    private void testHelper(boolean remoteEnabled) throws Exception {
+//        lookupShort(true);
+//        lookupRemoteShort(remoteEnabled);
+//        lookupLong(true);
+//        lookupRemoteLong(remoteEnabled);
 
         // use helper bean to lookup java namespaces because of java:module
         JavaColonLookupLocalHome home = (JavaColonLookupLocalHome) ctx.lookup("java:global/ConfigTestsTestApp/ConfigTestsEJB/JavaColonLookupBean!com.ibm.ws.ejbcontainer.bindings.configtests.ejb.JavaColonLookupLocalHome");
         JavaColonLookupLocalEJB jclbean = home.create();
         //Should always work for this test
-        jclbean.lookupJavaNamespaces(true);
+        jclbean.lookupJavaRemote(remoteEnabled);
 
     }
 
-    private void lookupShort(boolean bindToServerRoot) throws Exception {
+    private void lookupShort(boolean shouldWork) throws Exception {
         try {
             ConfigTestsLocalHome home = (ConfigTestsLocalHome) ctx.lookup("ejblocal:com.ibm.ws.ejbcontainer.bindings.configtests.ejb.ConfigTestsLocalHome");
-            if (bindToServerRoot) {
+            if (shouldWork) {
                 ConfigTestsLocalEJB bean = home.create();
                 assertNotNull("ConfigTestsLocalEJB short default lookup did not succeed.", bean);
                 String str = bean.getString();
@@ -92,17 +83,17 @@ public class BindToServerRootServlet extends FATServlet {
                 assertNull("ConfigTestsLocalEJB short default lookup should have failed", home);
             }
         } catch (NameNotFoundException nnfe) {
-            if (bindToServerRoot) {
+            if (shouldWork) {
                 fail("ConfigTestsLocalEJB short default lookup did not succeed. Got NameNotFoundException");
             }
             // else expected
         }
     }
 
-    private void lookupRemoteShort(boolean bindToServerRoot) throws Exception {
+    private void lookupRemoteShort(boolean shouldWork) throws Exception {
         try {
             Object lookup = ctx.lookup("com.ibm.ws.ejbcontainer.bindings.configtests.ejb.ConfigTestsRemoteHome");
-            if (bindToServerRoot) {
+            if (shouldWork) {
                 ConfigTestsRemoteHome home = (ConfigTestsRemoteHome) PortableRemoteObject.narrow(lookup, ConfigTestsRemoteHome.class);
                 ConfigTestsRemoteEJB bean = home.create();
                 assertNotNull("ConfigTestsRemoteEJB short default lookup did not succeed.", bean);
@@ -112,7 +103,7 @@ public class BindToServerRootServlet extends FATServlet {
                 assertNull("ConfigTestsRemoteEJB short default lookup should have failed", lookup);
             }
         } catch (NameNotFoundException nnfe) {
-            if (bindToServerRoot) {
+            if (shouldWork) {
                 fail("ConfigTestsRemoteEJB short default lookup did not succeed. Got NameNotFoundException");
             }
             // else expected
@@ -120,10 +111,10 @@ public class BindToServerRootServlet extends FATServlet {
 
     }
 
-    private void lookupLong(boolean bindToServerRoot) throws Exception {
+    private void lookupLong(boolean shouldWork) throws Exception {
         try {
             ConfigTestsLocalHome home = (ConfigTestsLocalHome) ctx.lookup("ejblocal:ConfigTestsTestApp/ConfigTestsEJB.jar/ConfigTestsTestBean#com.ibm.ws.ejbcontainer.bindings.configtests.ejb.ConfigTestsLocalHome");
-            if (bindToServerRoot) {
+            if (shouldWork) {
                 ConfigTestsLocalEJB bean = home.create();
                 assertNotNull("ConfigTestsLocalEJB long default lookup did not succeed.", bean);
                 String str = bean.getString();
@@ -132,7 +123,7 @@ public class BindToServerRootServlet extends FATServlet {
                 assertNull("ConfigTestsLocalEJB long default lookup should have failed", home);
             }
         } catch (NameNotFoundException nnfe) {
-            if (bindToServerRoot) {
+            if (shouldWork) {
                 fail("ConfigTestsLocalEJB long default lookup did not succeed. Got NameNotFoundException");
             }
             // else expected
@@ -140,10 +131,10 @@ public class BindToServerRootServlet extends FATServlet {
 
     }
 
-    private void lookupRemoteLong(boolean bindToServerRoot) throws Exception {
+    private void lookupRemoteLong(boolean shouldWork) throws Exception {
         try {
             Object lookup = ctx.lookup("ejb/ConfigTestsTestApp/ConfigTestsEJB.jar/ConfigTestsTestBean#com.ibm.ws.ejbcontainer.bindings.configtests.ejb.ConfigTestsRemoteHome");
-            if (bindToServerRoot) {
+            if (shouldWork) {
                 ConfigTestsRemoteHome home = (ConfigTestsRemoteHome) PortableRemoteObject.narrow(lookup, ConfigTestsRemoteHome.class);
                 ConfigTestsRemoteEJB bean = home.create();
                 assertNotNull("ConfigTestsRemoteEJB long default lookup did not succeed.", bean);
@@ -153,7 +144,7 @@ public class BindToServerRootServlet extends FATServlet {
                 assertNull("ConfigTestsRemoteEJB long default lookup should have failed", lookup);
             }
         } catch (NameNotFoundException nnfe) {
-            if (bindToServerRoot) {
+            if (shouldWork) {
                 fail("ConfigTestsRemoteEJB long default lookup did not succeed. Got NameNotFoundException");
             }
             // else expected
