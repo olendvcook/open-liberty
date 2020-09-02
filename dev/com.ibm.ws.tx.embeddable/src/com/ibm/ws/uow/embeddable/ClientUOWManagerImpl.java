@@ -248,6 +248,11 @@ public class ClientUOWManagerImpl implements UOWManager, UOWScopeCallback, UserT
         throw new IllegalStateException();
     }
 
+    @Override
+    public void unregisterRunUnderUOWCallback(UOWCallback callback) {
+        throw new IllegalStateException();
+    }
+
     /*
      * (non-Javadoc)
      *

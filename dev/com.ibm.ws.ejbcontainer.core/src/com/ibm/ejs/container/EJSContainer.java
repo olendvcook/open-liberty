@@ -45,7 +45,6 @@ import com.ibm.ejs.container.activator.ActivationStrategy;
 import com.ibm.ejs.container.activator.Activator;
 import com.ibm.ejs.container.interceptors.InvocationContextImpl;
 import com.ibm.ejs.container.lock.LockManager;
-import com.ibm.ejs.container.MessageEndpointCollaborator;
 import com.ibm.ejs.container.passivator.StatefulPassivator;
 import com.ibm.ejs.container.util.EJSPlatformHelper;
 import com.ibm.ejs.container.util.ExceptionUtil;
@@ -380,6 +379,8 @@ public class EJSContainer implements ORBDispatchInterceptor, FFDCSelfIntrospecta
         ivEmbedded = embedded;
     } // EJSContainer
 
+    RunUnderUOWCallback uowCallback;
+
     /**
      * Initialize this <code>EJSContainer</code> instance. <p>
      *
@@ -442,7 +443,8 @@ public class EJSContainer implements ORBDispatchInterceptor, FFDCSelfIntrospecta
         // Register an instance of RunUnderUOWCallback with the UOWManager,
         // so the EJB Container is notified when a 'user' (like Spring)
         // initiates a transaction.                                      LI4548-11
-        ivUOWManager.registerRunUnderUOWCallback(new RunUnderUOWCallback());
+        uowCallback = new RunUnderUOWCallback();
+        ivUOWManager.registerRunUnderUOWCallback(uowCallback);
 
         initialized = true;
         defaultContainer = this; // f111627.1
@@ -475,6 +477,9 @@ public class EJSContainer implements ORBDispatchInterceptor, FFDCSelfIntrospecta
 
         if (isTraceOn && tc.isEntryEnabled())
             Tr.entry(tc, "terminate");
+
+        if (uowCallback != null)
+            ivUOWManager.unregisterRunUnderUOWCallback(uowCallback);
 
         //-----------------------------
         // Stop passivation activity
@@ -2588,7 +2593,7 @@ public class EJSContainer implements ORBDispatchInterceptor, FFDCSelfIntrospecta
             if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled()) {
                 Tr.debug(tc, "Invoking MECollaborator " + meCollaborator + " for preInvoke processing with the following context data: " + contextData);
             }
-            
+
             s.messageEndpointContext = meCollaborator.preInvoke(contextData);
         }
 

@@ -362,6 +362,10 @@ public abstract class AbstractEJBRuntime implements EJBRuntime, InjectionMetaDat
      */
     public void stop() // F743-15582
     {
+        if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled())
+            Tr.debug(tc, "unregestering injection engine");
+        InjectionEngine injectionEngine = getInjectionEngine();
+        injectionEngine.unregisterInjectionMetaDataListener(this);
         if (ivContainer != null) {
             ivContainer.terminate();
         }

@@ -20,7 +20,6 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestWatcher;
@@ -35,8 +34,6 @@ import com.ibm.ws.ejbcontainer.bindings.configtests.web.DynamicRemoteFeatureServ
 import componenttest.annotation.Server;
 import componenttest.annotation.TestServlet;
 import componenttest.custom.junit.runner.FATRunner;
-import componenttest.rules.repeater.FeatureReplacementAction;
-import componenttest.rules.repeater.RepeatTests;
 import componenttest.topology.impl.LibertyServer;
 import componenttest.topology.utils.FATServletClient;
 
@@ -50,7 +47,7 @@ public class DynamicRemoteFeatureTest extends FATServletClient {
         @Override
         protected void failed(Throwable e, Description description) {
             try {
-                server.dumpServer("serverDump");
+                //server.dumpServer("serverDump");
             } catch (Exception e1) {
                 System.out.println("Failed to dump server");
                 e1.printStackTrace();
@@ -66,8 +63,8 @@ public class DynamicRemoteFeatureTest extends FATServletClient {
     @TestServlet(servlet = DynamicRemoteFeatureServlet.class, contextRoot = "ConfigTestsWeb")
     public static LibertyServer server;
 
-    @ClassRule
-    public static RepeatTests r = RepeatTests.with(FeatureReplacementAction.EE7_FEATURES().fullFATOnly().forServers("com.ibm.ws.ejbcontainer.bindings.fat.server")).andWith(FeatureReplacementAction.EE8_FEATURES().forServers("com.ibm.ws.ejbcontainer.bindings.fat.server"));
+    //@ClassRule
+    //public static RepeatTests r = RepeatTests.with(FeatureReplacementAction.EE7_FEATURES().fullFATOnly().forServers("com.ibm.ws.ejbcontainer.bindings.fat.server")).andWith(FeatureReplacementAction.EE8_FEATURES().forServers("com.ibm.ws.ejbcontainer.bindings.fat.server"));
 
     private static String ejbRemoteFeature = null;
 
@@ -136,8 +133,8 @@ public class DynamicRemoteFeatureTest extends FATServletClient {
         } else {
             Log.info(c, m, "Remote disabled, enabling");
             server.setMarkToEndOfLog();
-            //features.add(ejbRemoteFeature);
-            features.add("ejbRemote-3.2");
+            features.add(ejbRemoteFeature);
+            //features.add("ejbRemote-3.2");
             server.changeFeatures(new ArrayList<String>(features));
             server.waitForConfigUpdateInLogUsingMark(apps);
         }
@@ -147,20 +144,32 @@ public class DynamicRemoteFeatureTest extends FATServletClient {
     public void testDynamicRemote() throws Exception {
         enableEJBRemoteFeature();
 
-        FATServletClient.runTest(server, servlet, "testRemoteEnabled");
+        //FATServletClient.runTest(server, servlet, "testRemoteEnabled");
 
         disableEJBRemoteFeature();
-
-        FATServletClient.runTest(server, servlet, "testRemoteDisabled");
-
         enableEJBRemoteFeature();
+        disableEJBRemoteFeature();
+        enableEJBRemoteFeature();
+        disableEJBRemoteFeature();
+        enableEJBRemoteFeature();
+        disableEJBRemoteFeature();
+        enableEJBRemoteFeature();
+
+        System.gc();
+        System.gc();
+        System.gc();
+        System.gc();
+        System.gc();
+        System.runFinalization();
+
+        //server.javadumpThreads("--include:system");
 
         FATServletClient.runTest(server, servlet, "testRemoteEnabled");
     }
 
     //@Test
     public void testDisabledEnabled() throws Exception {
-        enableEJBRemoteFeature();
+        //enableEJBRemoteFeature();
 
         FATServletClient.runTest(server, servlet, "testRemoteEnabled");
     }

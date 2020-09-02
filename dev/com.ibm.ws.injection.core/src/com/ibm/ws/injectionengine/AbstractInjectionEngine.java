@@ -267,7 +267,7 @@ public abstract class AbstractInjectionEngine implements InternalInjectionEngine
      * If a processor was already registered with the specified annotation, that class will be returned
      * otherwise a null will be returned.
      *
-     * @param processor  The processor class to be registered
+     * @param processor The processor class to be registered
      * @param annotation The annotation class the processor is associated.
      * @throws InjectionException if the provider is already registered
      */
@@ -380,8 +380,8 @@ public abstract class AbstractInjectionEngine implements InternalInjectionEngine
      * Populates the empty cookie map with cookies to be injections.
      *
      * @param injectionTargetMap An empty map to be populated with the injection targets from
-     *                               the merged xml and annotations.
-     * @param compNSConfig       The component configuration information provided by the container.
+     *            the merged xml and annotations.
+     * @param compNSConfig The component configuration information provided by the container.
      * @throws InjectionException if an error occurs processing the injection metadata
      */
     @Override
@@ -420,10 +420,10 @@ public abstract class AbstractInjectionEngine implements InternalInjectionEngine
      * Processes injection metadata using the specified configuration with
      * InjectionProcessorContext already set.
      *
-     * @param compNSConfig     the component configuration with
-     *                             InjectionProcessorContext already set
+     * @param compNSConfig the component configuration with
+     *            InjectionProcessorContext already set
      * @param annotatedClasses the list of classes that should be processed for
-     *                             annotations, or <tt>null</tt> if the list should be determined from {@link ComponentNameSpaceConfiguration#getInjectionClasses}
+     *            annotations, or <tt>null</tt> if the list should be determined from {@link ComponentNameSpaceConfiguration#getInjectionClasses}
      */
     protected void processInjectionMetaData(ComponentNameSpaceConfiguration compNSConfig,
                                             List<Class<?>> annotatedClasses) throws InjectionException {
@@ -621,8 +621,8 @@ public abstract class AbstractInjectionEngine implements InternalInjectionEngine
      * from a map of declared injection targets.
      *
      * @param declaredTargets the result of {@link #getDeclaredInjectionTargets}
-     * @param instanceClass   the class to which injection targets should apply
-     * @param checkAppConfig  true if application configuration should be checked
+     * @param instanceClass the class to which injection targets should apply
+     * @param checkAppConfig true if application configuration should be checked
      * @return the applicable injection targets
      * @throws InjectionException
      */
@@ -932,6 +932,8 @@ public abstract class AbstractInjectionEngine implements InternalInjectionEngine
             if (register) {
                 factories.put(type, info); // d675976
             } else {
+                if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled())
+                    Tr.debug(tc, "Attempting to remove " + factories.get(type));
                 if (factories.get(type) != info) {
                     throw new InjectionException("Object factory " + objectFactory.getName() +
                                                  " not registered for the " + annotation.getName() +
@@ -939,10 +941,19 @@ public abstract class AbstractInjectionEngine implements InternalInjectionEngine
                 }
 
                 factories.remove(type);
+                objectFactoryMap.remove(annotation);
+
+                if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled())
+                    Tr.debug(tc, "contains factories?: " + factories.containsKey(type));
+                if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled())
+                    Tr.debug(tc, "contains map?: " + objectFactoryMap.containsKey(annotation));
+
             }
 
             if (copyOnWrite) {
                 // Replace exiting map after all updates have been made.
+                if (TraceComponent.isAnyTracingEnabled() && tc.isDebugEnabled())
+                    Tr.debug(tc, "copyOnWrite ");
                 if (allowOverride) {
                     ivObjectFactoryMap = objectFactoryMap;
                     ivObjectFactoryMapCopyOnWrite = false; // PM79779
@@ -970,11 +981,11 @@ public abstract class AbstractInjectionEngine implements InternalInjectionEngine
      * will be performed as if the override reference factory did not exist. <p>
      *
      * @param annotation the type of annotation processor the factory is to
-     *                       be registered with.
-     * @param factory    thread safe instance of an override reference factory.
+     *            be registered with.
+     * @param factory thread safe instance of an override reference factory.
      *
-     * @throws InjectionException       if an injection processor has not been
-     *                                      registered for the specified annotation.
+     * @throws InjectionException if an injection processor has not been
+     *             registered for the specified annotation.
      * @throws IllegalArgumentException if any of the parameters are null.
      **/
     // F1339-9050

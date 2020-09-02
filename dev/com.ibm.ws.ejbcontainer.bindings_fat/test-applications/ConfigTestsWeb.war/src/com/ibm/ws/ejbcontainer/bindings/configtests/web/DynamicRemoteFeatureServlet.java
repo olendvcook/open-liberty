@@ -53,6 +53,13 @@ public class DynamicRemoteFeatureServlet extends FATServlet {
         testHelper(true);
     }
 
+    public void testLegacyRemoteEnabled() throws Exception {
+//      lookupShort(true);
+        lookupRemoteShort(true);
+//      lookupLong(true);
+        lookupRemoteLong(true);
+    }
+
     public void testRemoteDisabled() throws Exception {
         testHelper(false);
     }

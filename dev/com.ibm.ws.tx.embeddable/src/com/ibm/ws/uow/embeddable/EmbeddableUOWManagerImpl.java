@@ -226,6 +226,21 @@ public class EmbeddableUOWManagerImpl implements UOWManager, UOWScopeCallback, U
     }
 
     @Override
+    public synchronized void unregisterRunUnderUOWCallback(UOWCallback callback) {
+        if (TraceComponent.isAnyTracingEnabled() && tc.isEntryEnabled())
+            Tr.entry(tc, "unregisterRunUnderUOWCallback", new Object[] { callback, this });
+
+        if (_runUnderUOWCallbackManager == null) {
+            return;
+        }
+
+        _runUnderUOWCallbackManager.removeCallback(callback);
+
+        if (TraceComponent.isAnyTracingEnabled() && tc.isEntryEnabled())
+            Tr.exit(tc, "unregisterRunUnderUOWCallback");
+    }
+
+    @Override
     public UOWScope getUOWScope() throws SystemException {
         if (tc.isEntryEnabled())
             Tr.entry(tc, "getUOWScope", this);
